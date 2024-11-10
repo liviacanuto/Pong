@@ -5,6 +5,27 @@ if (!gl) {
     throw new Error("WebGL not supported");
 }
 
+// Eventos
+
+canvas.focus()
+
+function HandleKeyPress(event){
+    switch(event.key){
+        case 'ArrowUp':
+            //Implentar movimentação do player 1 pra cima
+        case 'ArrowDown':
+            //Implentar movimentação do player 1 pra baixo
+        case 'KeyW':
+            //Implentar movimentação do player 2 pra cima
+        case 'KeyS':
+            //Implentar movimentação do player 1 pra baixo
+
+    }
+    console.log(`Tecla pressionada: ${event.key}`);
+    console.log(`Código da tecla pressionada: ${event.code}`);
+}
+
+canvas.addEventListener("keydown", HandleKeyPress);
 const vertexShaderGLSL = `
 attribute vec2 position;
 
