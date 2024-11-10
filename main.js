@@ -5,6 +5,8 @@ if (!gl) {
     throw new Error("WebGL not supported");
 }
 
+canvas.focus()
+
 const vertexShaderGLSL = `
 attribute vec2 position;
 
