@@ -49,6 +49,8 @@ let ball_dy = initialSpeedY;
 let speed = 1;
 let player1Score = 0;
 let player2Score = 0;
+let scorep1 = document.querySelector("#player1Score")
+let scorep2 = document.querySelector("#player2Score")
 
 function HandleKeyPress(event) {
     switch (event.key) {
@@ -173,9 +175,18 @@ function resetBallPosition() {
 function updateScore() {
     if (ball_x > 1) {
         player1Score++;
+        scorep1.textContent = player1Score;
     }
     if (ball_x < -1) {
         player2Score++;
+        scorep2.textContent = player2Score;
+    }
+    if(player1Score == 10 | player2Score == 10){
+        player1Score = 0;
+        player2Score = 0;
+        scorep1.textContent = 0;
+        scorep2.textContent = 0;
+
     }
 }
 
