@@ -1,85 +1,99 @@
-const canvas = document.querySelector("canvas");
-const gl = canvas.getContext("webgl");
+function main() {
+    const canvas = document.querySelector("#c");
+    const gl = canvas.getContext("webgl");
 
-if (!gl) {
-    throw new Error("WebGL not supported");
+    if (!gl) {
+        throw new Error("WebGL not supported");
+    }
+
+    const positionBuffer = gl.createBuffer();
+    const colorBuffer = gl.createBuffer();
+
+    var vertexShaderSource = document.querySelector("#vertex-shader-2d").text;
+    var fragmentShaderSource = document.querySelector("#fragment-shader-2d").text;
+
+    var vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+    var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+
+    var program = createProgram(gl, vertexShader, fragmentShader);
+
+    gl.useProgram(program);
+
+    const positionLocation = gl.getAttribLocation(program, `position`);
+    gl.enableVertexAttribArray(positionLocation);
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+
+    const colorLocation = gl.getAttribLocation(program, `color`);
+    gl.enableVertexAttribArray(colorLocation);
+    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+    gl.vertexAttribPointer(colorLocation, 3, gl.FLOAT, false, 0, 0);
+
+    gl.clearColor(0.1, 0.1, 0.1, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    loop(gl, positionBuffer, colorBuffer);
+
+    canvas.focus();
+    canvas.addEventListener("keydown", HandleKeyPress);
 }
 
 // Eventos
 
-canvas.focus()
-
-function HandleKeyPress(event){
-    switch(event.key){
-        case 'ArrowUp':
-            //Implentar movimentação do player 1 pra cima
-        case 'ArrowDown':
-            //Implentar movimentação do player 1 pra baixo
-        case 'KeyW':
-            //Implentar movimentação do player 2 pra cima
-        case 'KeyS':
-            //Implentar movimentação do player 1 pra baixo
-
+function HandleKeyPress(event) {
+    switch (event.key) {
+        case "ArrowUp":
+        //Implentar movimentação do player 1 pra cima
+        case "ArrowDown":
+        //Implentar movimentação do player 1 pra baixo
+        case "KeyW":
+        //Implentar movimentação do player 2 pra cima
+        case "KeyS":
+        //Implentar movimentação do player 1 pra baixo
     }
     console.log(`Tecla pressionada: ${event.key}`);
     console.log(`Código da tecla pressionada: ${event.code}`);
 }
 
-canvas.addEventListener("keydown", HandleKeyPress);
-const vertexShaderGLSL = `
-attribute vec2 position;
+function createShader(gl, type, source) {
+    var shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    var success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+    if (success) {
+        return shader;
+    }
 
-void main() {
-    gl_Position = vec4(position,0.0,1.0);
-}
-`;
-
-const fragmentShaderGLSL = `
-precision mediump float;
-
-void main() {
-    gl_FragColor = vec4(1.0,0.0,0.0,1.0);
-}
-`;
-
-const vertexShader = gl.createShader(gl.VERTEX_SHADER);
-gl.shaderSource(vertexShader, vertexShaderGLSL);
-gl.compileShader(vertexShader);
-if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
-    throw new Error(gl.getShaderInfoLog(vertexShader));
+    console.log(gl.getShaderInfoLog(shader));
+    gl.deleteShader(shader);
 }
 
-const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
-gl.shaderSource(fragmentShader, fragmentShaderGLSL);
-gl.compileShader(fragmentShader);
-if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
-    throw new Error(gl.getShaderInfoLog(fragmentShader));
+function createProgram(gl, vertexShader, fragmentShader) {
+    var program = gl.createProgram();
+    gl.attachShader(program, vertexShader);
+    gl.attachShader(program, fragmentShader);
+    gl.linkProgram(program);
+    var success = gl.getProgramParameter(program, gl.LINK_STATUS);
+    if (success) {
+        return program;
+    }
+
+    console.log(gl.getProgramInfoLog(program));
+    gl.deleteProgram(program);
 }
 
-const program = gl.createProgram();
-gl.attachShader(program, vertexShader);
-gl.attachShader(program, fragmentShader);
-gl.linkProgram(program);
-if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-    throw new Error(gl.getProgramInfoLog(program));
+function drawPoint(gl, x, y, positionBuffer, colorBuffer) {
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([x, y]), gl.STATIC_DRAW);
+    let colorData = [];
+    let color = [0.9, 0.9, 0.9];
+    colorData.push(...color);
+    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colorData), gl.STATIC_DRAW);
+    gl.drawArrays(gl.POINTS, 0, 1);
 }
 
-gl.useProgram(program);
-
-// vertex positions for a square
-const squareVertexPositions = new Float32Array([-0.5, 0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5, 0.5, -0.5, -0.5, -0.5]);
-
-const positionBuffer = gl.createBuffer();
-gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(squareVertexPositions), gl.STATIC_DRAW);
-
-const positionLocation = gl.getAttribLocation(program, `position`);
-gl.enableVertexAttribArray(positionLocation);
-gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
-
-gl.clearColor(1.0, 1.0, 1.0, 1.0);
-gl.clear(gl.COLOR_BUFFER_BIT);
-gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-
-gl.drawArrays(gl.TRIANGLES, 0, 6);
+function loop(gl, positionBuffer, colorBuffer) {
+    drawPoint(gl, 0, 0, positionBuffer, colorBuffer);
+}
+main();
