@@ -30,29 +30,41 @@ function main() {
     gl.vertexAttribPointer(colorLocation, 3, gl.FLOAT, false, 0, 0);
 
     gl.clearColor(0.1, 0.1, 0.1, 1.0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-
-    loop(gl, positionBuffer, colorBuffer);
 
     canvas.focus();
-    canvas.addEventListener("keydown", HandleKeyPress);
+    window.addEventListener("keydown", HandleKeyPress);
+
+    requestAnimationFrame(() => loop(gl, positionBuffer, colorBuffer));
 }
 
-// Eventos
+// Global variations
+let p1pos = 0.0;
+let p2pos = 0.0;
+let ball_x = 0.0;
+let ball_y = 0.0;
+let initialSpeedX = 0.01;
+let initialSpeedY = 0.01;
+let ball_dx = initialSpeedX;
+let ball_dy = initialSpeedY;
+let speed = 1;
+let player1Score = 0;
+let player2Score = 0;
 
 function HandleKeyPress(event) {
     switch (event.key) {
+        case "w":
+            p1pos = Math.min(0.75, p1pos + 0.1);
+            break;
+        case "s":
+            p1pos = Math.max(-0.95, p1pos - 0.1);
+            break;
         case "ArrowUp":
-        //Implentar movimentação do player 1 pra cima
+            p2pos = Math.min(0.75, p2pos + 0.1);
+            break;
         case "ArrowDown":
-        //Implentar movimentação do player 1 pra baixo
-        case "KeyW":
-        //Implentar movimentação do player 2 pra cima
-        case "KeyS":
-        //Implentar movimentação do player 1 pra baixo
+            p2pos = Math.max(-0.95, p2pos - 0.1);
+            break;
     }
-    console.log(`Tecla pressionada: ${event.key}`);
-    console.log(`Código da tecla pressionada: ${event.code}`);
 }
 
 function createShader(gl, type, source) {
@@ -63,7 +75,6 @@ function createShader(gl, type, source) {
     if (success) {
         return shader;
     }
-
     console.log(gl.getShaderInfoLog(shader));
     gl.deleteShader(shader);
 }
@@ -77,7 +88,6 @@ function createProgram(gl, vertexShader, fragmentShader) {
     if (success) {
         return program;
     }
-
     console.log(gl.getProgramInfoLog(program));
     gl.deleteProgram(program);
 }
@@ -85,62 +95,104 @@ function createProgram(gl, vertexShader, fragmentShader) {
 function drawPoint(gl, x, y, positionBuffer, colorBuffer) {
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([x, y]), gl.STATIC_DRAW);
-    let colorData = [];
-    let color = [0.9, 0.9, 0.9];
-    colorData.push(...color);
     gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colorData), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0.9, 0.9, 0.9]), gl.STATIC_DRAW);
     gl.drawArrays(gl.POINTS, 0, 1);
 }
 
 function drawCentralLine(gl, positionBuffer, colorBuffer) {
-    j = 1;
-    for (i = 0; i < 16; i++) {
-        drawPoint(gl, 0, j, positionBuffer, colorBuffer);
-        j = j - 0.1333;
+    for (let i = -0.9; i < 1; i += 0.2) {
+        drawPoint(gl, 0, i, positionBuffer, colorBuffer);
     }
 }
 
-function drawPlayer1(gl, ancoraY, positionBuffer, colorBuffer) {
-    for (i = 0; i < 5; i++) {
-        drawPoint(gl, -0.88, ancoraY + i * 0.05, positionBuffer, colorBuffer);
+function drawPlayer1(gl, x, y, positionBuffer, colorBuffer) {
+    for (let i = 0; i < 5; i++) {
+        drawPoint(gl, x, y + i * 0.05, positionBuffer, colorBuffer);
     }
 }
 
-function drawPlayer2(gl, ancoraY, positionBuffer, colorBuffer) {
-    for (i = 0; i < 5; i++) {
-        drawPoint(gl, 0.88, ancoraY + i * 0.05, positionBuffer, colorBuffer);
+function drawPlayer2(gl, x, y, positionBuffer, colorBuffer) {
+    for (let i = 0; i < 5; i++) {
+        drawPoint(gl, x, y + i * 0.05, positionBuffer, colorBuffer);
     }
 }
 
-function drawHorizontalLine(gl, y, positionBuffer, colorBuffer) {
-    for(i = 0; i < 41; i++) {
-        drawPoint(gl, -1 + i * 0.05, y, positionBuffer, colorBuffer);
-    }
+function drawPlayers(gl, positionBuffer, colorBuffer) {
+    drawPlayer1(gl, -0.9, p1pos, positionBuffer, colorBuffer);
+    drawPlayer2(gl, 0.9, p2pos, positionBuffer, colorBuffer);
 }
 
 function drawBorderLine(gl, positionBuffer, colorBuffer) {
-    drawHorizontalLine(gl, -0.98, positionBuffer, colorBuffer);
-    drawHorizontalLine(gl, 0.98, positionBuffer, colorBuffer);
+    for (let i = -1; i <= 1; i += 0.05) {
+        drawPoint(gl, i, -0.98, positionBuffer, colorBuffer);
+        drawPoint(gl, i, 0.98, positionBuffer, colorBuffer);
+    }
 }
 
-function drawBall(gl, x, y, positionBuffer, colorBuffer) {
-    drawPoint(gl, x, y, positionBuffer, colorBuffer);
+function drawBall(gl, positionBuffer, colorBuffer) {
+    drawPoint(gl, ball_x, ball_y, positionBuffer, colorBuffer);
+}
+
+function updateBallPosition() {
+    ball_x += ball_dx;
+    ball_y += ball_dy;
+}
+
+function handleBorderCollision() {
+    if (ball_y > 0.95 || ball_y < -0.95) {
+        ball_dy = -ball_dy;
+    }
+}
+
+function increaseBallSpeedOnPlayerCollision(speed) {
+    ball_dx *= speed;
+    ball_dy *= speed;
+}
+
+function handlePlayerCollision() {
+    if (
+        (ball_x < -0.85 && ball_y > p1pos - 0.1 && ball_y < p1pos + 0.25) ||
+        (ball_x > 0.85 && ball_y > p2pos - 0.1 && ball_y < p2pos + 0.25)
+    ) {
+        ball_dx = -ball_dx;
+        increaseBallSpeedOnPlayerCollision(1.3);
+    }
+}
+
+function resetBallPosition() {
+    if (ball_x > 1 || ball_x < -1) {
+        updateScore();
+        ball_x = 0;
+        ball_y = 0;
+        ball_dx = initialSpeedX;
+        ball_dy = initialSpeedY;
+    }
+}
+
+function updateScore() {
+    if (ball_x > 1) {
+        player1Score++;
+    }
+    if (ball_x < -1) {
+        player2Score++;
+    }
 }
 
 function loop(gl, positionBuffer, colorBuffer) {
-    //static
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    updateBallPosition();
+    handleBorderCollision();
+    handlePlayerCollision();
+    resetBallPosition();
+
     drawBorderLine(gl, positionBuffer, colorBuffer);
     drawCentralLine(gl, positionBuffer, colorBuffer);
-    
-    //dynamic
-    let p1pos = 0;
-    let p2pos = 0;
-    drawPlayer1(gl, p1pos, positionBuffer, colorBuffer);
-    drawPlayer2(gl, p2pos, positionBuffer, colorBuffer);
+    drawPlayers(gl, positionBuffer, colorBuffer);
+    drawBall(gl, positionBuffer, colorBuffer);
 
-    let ball_x = 0.5;
-    let ball_y = 0.5;
-    drawBall(gl, ball_x, ball_y, positionBuffer, colorBuffer);
+    requestAnimationFrame(() => loop(gl, positionBuffer, colorBuffer));
 }
+
 main();

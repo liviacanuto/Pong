@@ -1,11 +1,10 @@
-
-<!DOCTYPE <!DOCTYscripPE html>
+<!DOCTYPE html>
 <html>
 
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>WebGL</title>
+    <title>Pong</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" type="text/css" media="screen" href="main.css" />
     <script src="main.js" defer></script>
@@ -14,7 +13,11 @@
 <body>
     <p> .</p>
     <canvas id="c" width="600" height="600"></canvas>
-    <script id="vertex-shader-2d" type="notjs">
+    <div id="score">
+        <p>Player 1: <span id="player1Score">0</span></p>
+        <p>Player 2: <span id="player2Score">0</span></p>
+    </div>
+    <script id="vertex-shader-2d" type="x-shader/x-vertex">
         attribute vec2 position;
         attribute vec3 color;
         varying vec3 vColor;
@@ -24,8 +27,8 @@
             gl_PointSize = 15.0;
             vColor = color;
         }
-      </script>
-    <script id="fragment-shader-2d" type="notjs">
+    </script>
+    <script id="fragment-shader-2d" type="x-shader/x-fragment">
         precision mediump float;
 
         varying vec3 vColor;        
@@ -33,7 +36,7 @@
         void main() {
             gl_FragColor = vec4(vColor,1.0);
         }
-      </script>
+    </script>
 </body>
 
 </html>
